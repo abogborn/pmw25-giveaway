@@ -51,8 +51,9 @@ with open("pmw25_groomed-entries.csv") as giveaway:
                     if region_conditional == True:
                         for row in region_source:
                             if row[1].lower() == winner[3].lower():
-                                if "NO" in row[4]:
+                                if "NO, I am a resident of the United States or Canada" in row[4]:
                                     successful_winner = True
+                                    print(winner)
                                 else:
                                     break
                     else:
