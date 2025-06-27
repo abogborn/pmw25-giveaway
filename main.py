@@ -1,68 +1,71 @@
 import csv
 import datetime
 import random
+import json
+import re
 
-split_value = "."
-datetime_format = "%Y-%m-%d %H:%M:%S"
+with open("required-script-info.json") as file:
+    required_data = json.load(file)
 
-filename = input("What is the file name of the Tiltify CSV placed in the same directory as this script?  Please include the full \"filename.csv\" in your input here.\n")
+with open(required_data["tiltifyCSV"]) as csv_input1:
+    with open(required_data["googleCSV"]) as csv_input2:
+        with open("pmw25_groomed-entries.csv", "w", newline='') as csv_output:
+            input_reader1 = csv.reader(csv_input1)
+            input_reader2 = csv.reader(csv_input2)
+            output_writer = csv.writer(csv_output)
+            validated_entry = []
+            for row in input_reader1:
+                # if "+" in row[3]:
+                #     pass
+                if row[3].lower() not in validated_entry:
+                    output_writer.writerow(row)
+                    validated_entry.append(row[3].lower())
+            for row in input_reader2:
+                # Figure this out for Google CSV entries and integrating them into the giveaway script
+                if row[1].lower() not in validated_entry:
+                    output_writer.writerow(['Google', 'Free', 'Entry', row[1].lower(), row[2], row[3], row[0], row[4], row[5], row[6], '', '', '', ''])
+                    validated_entry.append(row[1].lower())
 
-if input("Do you want to set a timeframe in which the donation must be made to win? (y/n)\n").lower() == "y":
-    timeframe_conditional = True
-    timeframe_beginning = input("What is the earliest time you'd like to define for the giveaway window used?  Format: \"YYYY-MM-DD HH:MM:SS\". (Use 24hr value in HH section.)\n")
-    timeframe_end = input("What is the latest time you'd like to define for the giveaway window used?  Format: \"YYYY-MM-DD HH:MM:SS\". (Use 24hr value in HH section.)\n")
-    datetime_beginning = datetime.datetime.strptime(timeframe_beginning, datetime_format)
-    datetime_end = datetime.datetime.strptime(timeframe_end, datetime_format)
-else:
-    timeframe_conditional = False
+winners = int(input("How many giveaways would you like to choose winners for? Please only insert numbers. "))
 
-if input("Do you want this giveaway to be US and Canada only? (y/n)\n").lower() == "y":
-    region_conditional = True
-    region_filename = input("What is the file name of the Google Form CSV placed in the same directory as this script?  Please include the full \"filename.csv\" in your input here.\n")
-else:
-    region_conditional = False
+def main(entries, timeframe_enabled, timeframe_start, timeframe_end):
+    return winner_selection(entries, timeframe_enabled, timeframe_start, timeframe_end)
 
-with open(filename) as input:
-    with open("pmw25_groomed-entries.csv", "w", newline='') as output:
-        input_reader = csv.reader(input)
-        output_writer = csv.writer(output)
-        validated_entry = []
-        for row in input_reader:
-             # if "+" in row[3]:
-             #     pass
-             if row[3].lower() not in validated_entry:
-                 output_writer.writerow(row)
-                 validated_entry.append(row[3].lower())
+def timeframe_check(begin, end, entry):
+    split_value = "."
+    datetime_format = "%Y-%m-%d %H:%M:%S"
+    datetime_begin = datetime.datetime.strptime(begin, datetime_format)
+    datetime_end = datetime.datetime.strptime(end, datetime_format)
+    try:
+        datetime_winner = datetime.datetime.strptime(entry[6].split(split_value)[0], datetime_format)
+    except:
+        return False
+    if datetime_begin < datetime_winner < datetime_end:
+        return entry
+    else:
+        return False
+
+def winner_selection(data, timeframe_enabled, timeframe_start, timeframe_end):
+    successful_winner = False
+    while successful_winner == False:
+        winner = random.choice(data)
+        if winner[0] == "Donation ID":
+            break
+        if timeframe_enabled == "y":
+            timeframe_winner = timeframe_check(timeframe_start, timeframe_end, winner)
+            if timeframe_winner != False:
+                return timeframe_winner
+            else:
+                continue
+        else:
+            return winner
 
 with open("pmw25_groomed-entries.csv") as giveaway:
     giveaway_reader = csv.reader(giveaway)
     entries = list(giveaway_reader)
-    if region_conditional == True:
-        with open(region_filename) as region:
-            region_reader = csv.reader(region)
-            region_source = list(region_reader)
-    successful_winner = False
-    while successful_winner == False:
-        winner = random.choice(entries)
-        if timeframe_conditional == True:
-            try:
-                datetime_winner = datetime.datetime.strptime(winner[6].split(split_value)[0], datetime_format)
-                if datetime_beginning < datetime_winner < datetime_end:
-                    if region_conditional == True:
-                        for row in region_source:
-                            if row[1].lower() == winner[3].lower():
-                                if "NO, I am a resident of the United States or Canada" in row[4]:
-                                    successful_winner = True
-                                    print(winner)
-                                else:
-                                    break
-                    else:
-                        successful_winner = True
-                        print(winner)
-                else:
-                    continue
-            except:
-                continue
-        else:
-            successful_winner = True
+    counter = winners
+    while counter > 0:
+        winner = main(entries, required_data["timeframeEnabled"], required_data["timeframeStart"], required_data["timeframeEnd"])
+        if winner != None:
             print(winner)
+            counter -= 1

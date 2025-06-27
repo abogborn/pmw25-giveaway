@@ -1,0 +1,7 @@
+{
+  "tiltifyCSV": "filename.csv",
+  "googleCSV": "filename.csv",
+  "timeframeEnabled": "y/n",
+  "timeframeStart": "YYYY-MM-DD HH:MM:SS",
+  "timeframeEnd": "YYYY-MM-DD HH:MM:SS"
+}
