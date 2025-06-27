@@ -51,6 +51,8 @@ def winner_selection(data, timeframe_enabled, timeframe_start, timeframe_end):
         winner = random.choice(data)
         if winner[0] == "Donation ID":
             break
+        if winner[4] == "Twitch Username":
+            break
         if timeframe_enabled == "y":
             timeframe_winner = timeframe_check(timeframe_start, timeframe_end, winner)
             if timeframe_winner != False:
